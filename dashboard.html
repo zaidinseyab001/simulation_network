@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__ROLE__ tenant</title>
+<style>
+  :root {
+    --accent: __ACCENT__;
+    --bg: #f5f6f8; --card: #ffffff; --fg: #1b1f24; --muted: #5f6b7a; --line: #e2e6eb; --chip: #eef1f5;
+    --ok: #1a7f37; --ok-bg: #e6f4ea; --warn: #9a5b00; --warn-bg: #fff4e0; --bad: #c62828; --bad-bg: #fdecea;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1216; --card: #171b21; --fg: #e6e9ee; --muted: #9aa4b2; --line: #2a3039; --chip: #222831;
+      --ok: #5fd07a; --ok-bg: #16301e; --warn: #f2b154; --warn-bg: #33270f; --bad: #ff7b72; --bad-bg: #3a1a1a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 20px 16px 48px; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-bottom: 18px; }
+  .badge { background: var(--accent); color: #fff; font-weight: 700; letter-spacing: .08em; padding: 6px 12px; border-radius: 6px; text-transform: uppercase; }
+  h1 { font-size: 20px; margin: 0; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .meta b, .mono { font-family: var(--mono); color: var(--fg); font-weight: 500; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; margin-bottom: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+  .card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 12px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; }
+  .row > div { flex: 1 1 120px; }
+  input, select { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); font: inherit; }
+  input.ip { font-family: var(--mono); }
+  button { padding: 8px 14px; border: 1px solid var(--accent); background: var(--accent); color: #fff; border-radius: 6px; font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  button.ghost { background: transparent; color: var(--fg); border-color: var(--line); }
+  button:disabled { opacity: .5; cursor: default; }
+  .hint { margin-top: 10px; font-size: 12px; color: var(--muted); }
+  .flash { margin-top: 8px; font-size: 12px; min-height: 1em; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+  .stat .n { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 12px; color: var(--muted); }
+  .panels { display: flex; flex-direction: column; gap: 14px; }
+  .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+  .panel-head h2 { margin: 0; }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr.fresh td { animation: flash 1.4s ease-out; }
+  @keyframes flash { from { background: color-mix(in srgb, var(--accent) 18%, transparent); } to { background: transparent; } }
+  .addr { font-family: var(--mono); white-space: nowrap; }
+  .addr b { font-weight: 700; }
+  .arrow { color: var(--accent); font-weight: 700; text-align: center; }
+  .sub { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; background: var(--chip); color: var(--muted); }
+  .chip.ok { background: var(--ok-bg); color: var(--ok); }
+  .chip.warn { background: var(--warn-bg); color: var(--warn); }
+  .chip.bad { background: var(--bad-bg); color: var(--bad); }
+  .empty { color: var(--muted); padding: 18px 8px; text-align: center; }
+  .time { font-family: var(--mono); white-space: nowrap; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="badge" id="badge">__ROLE__</span>
+    <div>
+      <h1 id="title">Tenant</h1>
+      <div class="meta" id="meta">loading…</div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="card">
+      <h2 id="peerHead">Peer</h2>
+      <div class="row">
+        <div style="flex: 2 1 180px"><label for="peerIp" id="peerLabel">Peer IP</label><input id="peerIp" class="ip" placeholder="e.g. 10.0.0.25"></div>
+        <div style="flex: 1 1 90px"><label for="peerPort">Port</label><input id="peerPort" class="ip" type="number" min="1" max="65535"></div>
+        <button id="saveBtn">Save</button>
+      </div>
+      <div class="hint" id="peerHint"></div>
+      <div class="flash" id="cfgFlash"></div>
+    </div>
+
+    <div class="card">
+      <h2 id="sendHead">Send hit</h2>
+      <div class="row">
+        <div style="flex: 3 1 180px"><label for="msg">Message (optional)</label><input id="msg" placeholder="hello"></div>
+        <div style="flex: 1 1 70px"><label for="count">Count</label><input id="count" type="number" min="1" max="50" value="1"></div>
+        <button id="sendBtn">Send hit →</button>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div><label for="auto">Auto-send</label>
+          <select id="auto">
+            <option value="0">Off</option><option value="1">every 1 s</option>
+            <option value="2">every 2 s</option><option value="5">every 5 s</option><option value="10">every 10 s</option>
+          </select>
+        </div>
+        <button class="ghost" id="clearBtn">Clear logs</button>
+      </div>
+      <div class="flash" id="sendFlash"></div>
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="panels">
+    <div class="card" id="inPanel">
+      <div class="panel-head"><h2>Incoming hits — who hit me</h2><span class="meta" id="inCount"></span></div>
+      <div class="scroll"><table>
+        <thead><tr><th>Time</th><th>Origin (came from)</th><th></th><th>Reached (landed on)</th><th>Caller</th><th>Check</th></tr></thead>
+        <tbody id="inBody"></tbody>
+      </table></div>
+    </div>
+    <div class="card" id="outPanel">
+      <div class="panel-head"><h2>Outgoing hits — who I hit</h2><span class="meta" id="outCount"></span></div>
+      <div class="scroll"><table>
+        <thead><tr><th>Time</th><th>Source (left from)</th><th></th><th>Destination (sent to)</th><th>What the other side saw</th><th>Result</th></tr></thead>
+        <tbody id="outBody"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ROLE = "__ROLE__";
+const PEER = ROLE === "sender" ? "receiver" : "sender";
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const addr = (ip, port) => ip ? `<b>${esc(ip)}</b>:${esc(port ?? "?")}` : `<span class="sub">—</span>`;
+const hhmmss = iso => esc((iso || "").slice(11, 23));
+
+async function api(path, body) {
+  const opts = body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
+  const r = await fetch(path, opts);
+  const data = await r.json();
+  if (!r.ok || data.ok === false) throw new Error(data.error || r.statusText);
+  return data;
+}
+function flash(id, text, kind) {
+  const el = $(id);
+  el.textContent = text;
+  el.style.color = kind === "bad" ? "var(--bad)" : kind === "ok" ? "var(--ok)" : "var(--muted)";
+}
+
+// role-specific wording + panel order (sender cares about outgoing first, receiver about incoming)
+$("title").textContent = `${cap(ROLE)} tenant`;
+$("peerHead").textContent = `${cap(PEER)} to talk to`;
+$("peerLabel").textContent = `${cap(PEER)} IP`;
+$("sendHead").textContent = ROLE === "sender" ? "Send hit to receiver" : "Send test hit back to sender";
+$("sendBtn").textContent = `Send hit to ${PEER} →`;
+if (ROLE === "sender") $("outPanel").after($("inPanel")); else $("inPanel").after($("outPanel"));
+
+let formLoaded = false, seen = new Set(), firstRender = true;
+
+function render(s) {
+  $("meta").innerHTML = `host <b>${esc(s.hostname)}</b> · this machine's IPs <b>${esc(s.local_ips.join(", ") || "?")}</b> · listening on port <b>${esc(s.port)}</b> · hit URL <b>/hit</b>`;
+  if (!formLoaded) {
+    $("peerIp").value = s.peer_ip; $("peerPort").value = s.peer_port; $("auto").value = String(s.auto_interval);
+    formLoaded = true;
+  }
+  $("peerHint").innerHTML = s.peer_ip
+    ? `Hits go to <span class="mono">${esc(s.peer_resolved)}:${esc(s.peer_port)}</span>` +
+      (s.route_ip ? ` · this machine will send from <span class="mono">${esc(s.route_ip)}</span>` : "") +
+      `<br>Incoming hits are checked against <span class="mono">${esc(s.peer_resolved)}</span>.`
+    : `Enter the ${PEER}'s IP. Incoming hits will be checked against it.`;
+
+  const inc = s.incoming, out = s.outgoing;
+  const delivered = out.filter(r => r.status === "delivered").length;
+  const unexpected = inc.filter(r => r.status === "unexpected").length;
+  const nat = out.filter(r => r.nat).length;
+  const origins = new Set(inc.map(r => r.from_ip)).size;
+  $("stats").innerHTML = [
+    [inc.length, "incoming hits"], [origins, "distinct origin IPs"], [unexpected, "from unexpected IPs"],
+    [out.length, "outgoing hits"], [delivered, "delivered"], [out.length - delivered, "failed"], [nat, "NAT / IP rewritten"],
+  ].map(([n, l]) => `<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+  $("inCount").textContent = `${inc.length} shown`;
+  $("outCount").textContent = `${out.length} shown`;
+
+  const fresh = r => { const k = r.direction + r.id + r.time; const f = !firstRender && !seen.has(k); seen.add(k); return f ? ' class="fresh"' : ""; };
+
+  $("inBody").innerHTML = inc.length ? inc.map(r => {
+    const chip = r.status === "expected" ? `<span class="chip ok">✓ expected ${PEER}</span>`
+      : r.status === "unexpected" ? `<span class="chip bad">✗ not ${esc(r.expected_ip)}</span>`
+      : `<span class="chip">no ${PEER} IP set</span>`;
+    const caller = r.caller_role
+      ? `${esc(r.caller_role)} on <b>${esc(r.caller_hostname)}</b>`
+      : `<span class="chip warn">not a tenant</span> <span class="sub">${esc(r.user_agent)}</span>`;
+    const claimed = r.caller_claimed_ip && r.caller_claimed_ip !== r.from_ip
+      ? `<div class="sub">caller thinks it is <span class="mono">${esc(r.caller_claimed_ip)}</span> → NAT in between</div>` : "";
+    return `<tr${fresh(r)}>
+      <td class="time">${hhmmss(r.time)}</td>
+      <td class="addr">${addr(r.from_ip, r.from_port)}${r.x_forwarded_for ? `<div class="sub">X-Forwarded-For: ${esc(r.x_forwarded_for)}</div>` : ""}${claimed}</td>
+      <td class="arrow">→</td>
+      <td class="addr">${addr(r.to_ip, r.to_port)}<div class="sub">Host: ${esc(r.host_header)}</div></td>
+      <td>${caller}${r.message ? `<div class="sub">“${esc(r.message)}”</div>` : ""}<div class="sub">${esc(r.method)} · id ${esc(r.id)}</div></td>
+      <td>${chip}</td></tr>`;
+  }).join("") : `<tr><td colspan="6" class="empty">No hits received yet. Point the ${PEER} at this machine's IP and port ${esc(s.port)}.</td></tr>`;
+
+  $("outBody").innerHTML = out.length ? out.map(r => {
+    let result;
+    if (r.status === "delivered") result = `<span class="chip ok">✓ delivered</span><div class="sub">${esc(r.latency_ms)} ms</div>`;
+    else if (r.status === "http_error") result = `<span class="chip bad">HTTP ${esc(r.http_status)}</span>`;
+    else result = `<span class="chip bad">✗ failed</span><div class="sub">${esc(r.error)}</div>`;
+    let saw = `<span class="sub">—</span>`;
+    if (r.status === "delivered") {
+      saw = `<div class="addr">origin ${addr(r.remote_seen_ip, r.remote_seen_port)}</div>
+             <div class="addr sub">landed on ${esc(r.remote_reached_ip)}:${esc(r.remote_reached_port)} (${esc(r.remote_role || "?")} on ${esc(r.remote_hostname || "?")})</div>`;
+      if (r.nat) saw += `<div><span class="chip warn">IP rewritten (NAT/proxy)</span></div>`;
+      if (r.remote_verdict === "unexpected") saw += `<div><span class="chip bad">${PEER} flagged me as unexpected</span></div>`;
+      if (r.remote_verdict === "expected") saw += `<div><span class="chip ok">${PEER} recognised me</span></div>`;
+    }
+    return `<tr${fresh(r)}>
+      <td class="time">${hhmmss(r.time)}${r.trigger === "auto" ? `<div class="sub">auto</div>` : ""}</td>
+      <td class="addr">${addr(r.from_ip, r.from_port)}</td>
+      <td class="arrow">→</td>
+      <td class="addr">${addr(r.to_ip, r.to_port)}</td>
+      <td>${saw}</td>
+      <td>${result}</td></tr>`;
+  }).join("") : `<tr><td colspan="6" class="empty">Nothing sent yet.</td></tr>`;
+  firstRender = false;
+}
+
+async function refresh() {
+  try { render(await api("/api/state")); } catch (e) { $("meta").textContent = "dashboard lost contact with the tenant server: " + e.message; }
+}
+
+$("saveBtn").onclick = async () => {
+  try {
+    await api("/api/config", { peer_ip: $("peerIp").value, peer_port: $("peerPort").value });
+    formLoaded = false; flash("cfgFlash", "Saved.", "ok"); refresh();
+  } catch (e) { flash("cfgFlash", e.message, "bad"); }
+};
+$("peerIp").addEventListener("keydown", e => { if (e.key === "Enter") $("saveBtn").click(); });
+$("sendBtn").onclick = async () => {
+  $("sendBtn").disabled = true; flash("sendFlash", "Sending…");
+  try {
+    const { results } = await api("/api/send", { message: $("msg").value, count: Number($("count").value) || 1 });
+    const ok = results.filter(r => r.status === "delivered").length;
+    flash("sendFlash", `${ok}/${results.length} delivered` + (ok < results.length ? ` — ${results.find(r => r.status !== "delivered").error || "HTTP error"}` : ""), ok === results.length ? "ok" : "bad");
+  } catch (e) { flash("sendFlash", e.message, "bad"); }
+  $("sendBtn").disabled = false; refresh();
+};
+$("msg").addEventListener("keydown", e => { if (e.key === "Enter") $("sendBtn").click(); });
+$("auto").onchange = () => api("/api/auto", { interval: Number($("auto").value) }).then(() => flash("sendFlash", $("auto").value === "0" ? "Auto-send off." : `Auto-sending every ${$("auto").value} s.`, "ok"));
+$("clearBtn").onclick = () => api("/api/clear", {}).then(refresh);
+
+refresh();
+setInterval(refresh, 1500);
+</script>
+</body>
+</html>
